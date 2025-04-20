@@ -1,0 +1,17 @@
+# Pliki danych
+*.csv
+
+# Logi i checkpointy
+logs/
+checkpoints/
+
+# Środowisko wirtualne
+.venv/
+
+# PyCharm
+.idea/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pkl
