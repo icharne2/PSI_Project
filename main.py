@@ -239,11 +239,11 @@ if __name__ == "__main__":
 
     #Hyperparameter tuning dla CNN
     #Sa tu eksparymenty dla różnej liczby filtor z różnym dropoutem i z mniejszymi batch_size oraz epokami.
-    run_all_experiments()
+    #run_all_experiments()
     # Test z różną liczbą filtrów
-    plot_training_curves("logs/cnn_small/version_0/metrics.csv")
-    plot_training_curves("logs/cnn_medium/version_0/metrics.csv")
-    plot_training_curves("logs/cnn_large/version_0/metrics.csv")
+    #plot_training_curves("logs/cnn_small/version_0/metrics.csv")
+    #plot_training_curves("logs/cnn_medium/version_0/metrics.csv")
+    #plot_training_curves("logs/cnn_large/version_0/metrics.csv")
 
     # Test z różną liczbą epok
     #plot_training_curves("logs/cnn_epochs_5/version_0/metrics.csv")
@@ -257,5 +257,5 @@ if __name__ == "__main__":
     #plot_training_curves("logs/resnet50/version_0/metrics.csv")
 
     # Trening LSTM - 28 kroków po 28 pixeli (linia po linii)
-    #train_lstm()
-    #plot_training_curves("logs/lstm/version_0/metrics.csv")
+    train_lstm()
+    plot_training_curves("logs/lstm/version_0/metrics.csv")
