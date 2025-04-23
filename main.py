@@ -13,7 +13,7 @@ from pytorch_lightning.callbacks import ModelCheckpoint  # Zapisywanie najlepsze
 from pytorch_lightning.loggers import CSVLogger  # Logowanie postępów treningu do pliku CSV
 import gc
 
-def load_mnist_data(train_path="mnist_train.csv", test_path="mnist_test.csv", resize_to_96=False):
+def load_mnist_data(train_path="mnist_train.csv", test_path="mnist_test.csv", resize_to_96=False, add_noise=False, noise_std=0.3):
     """
     Wczytuje dane MNIST, przetwarza je i zwraca DataLoadery dla zbioru treningowego i walidacyjnego.
 
@@ -42,6 +42,21 @@ def load_mnist_data(train_path="mnist_train.csv", test_path="mnist_test.csv", re
     y_train = torch.tensor(y_train, dtype=torch.long)
     X_test = torch.tensor(X_test, dtype=torch.float32)
     y_test = torch.tensor(y_test, dtype=torch.long)
+
+    # Dodanie szumu (white noise)
+    if add_noise: #Jeli jest zdefiniowany
+        #Tworzymy tensor noise_train o tym samym kształcie co X_train oraz X_test, z wartościami wylosowanymi z rozkładu normalnego N(0,1).
+        noise_train = torch.randn_like(X_train) * noise_std
+        noise_test = torch.randn_like(X_test) * noise_std
+
+        # Dodajemy wygenerowany szum do danych wejściowych.
+        X_train = X_train + noise_train
+        X_test = X_test + noise_test
+
+        #Ograniczamy wartości pikseli, żeby pozostały w zakresie [0, 1] (bo wcześniej znormalizowaliśmy obrazy, dzieląc przez 255).
+        #Gdyby nie to, mogłyby się pojawić ujemne piksele albo >1, co mogłoby zmylić model.
+        X_train = torch.clamp(X_train, 0.0, 1.0)
+        X_test = torch.clamp(X_test, 0.0, 1.0)
 
     # Przeskalowanie do 64x64
     if resize_to_96:
@@ -82,7 +97,7 @@ def train_cnn():
     Trenuje model CNN na zbiorze MNIST
     """
 
-    train_loader, val_loader = load_mnist_data(resize_to_96=False)
+    train_loader, val_loader = load_mnist_data(resize_to_96=False, add_noise=True, noise_std=0.3)
 
     # Inicjalizacja modelu CNN
     model = CNNModel()
@@ -111,7 +126,7 @@ def train_cnn():
 
     model.evaluate_accuracy(val_loader)
 
-    model.visualize_results(val_loader, save_path="cnn_conf_matrix.png")
+    model.visualize_results(val_loader, save_path="cnn_conf_matrix_2.png")
 
 
 def train_resnet50():
@@ -121,7 +136,7 @@ def train_resnet50():
     """
 
     # Wczytanie danych i przeskalowanie do 96x96
-    train_loader, val_loader = load_mnist_data(resize_to_96=True)
+    train_loader, val_loader = load_mnist_data(resize_to_96=True, add_noise=True, noise_std=0.3)
 
     # Inicjalizacja modelu ResNet50 z 10 klasami wyjściowymi
     model = ResNet50Classifier(num_classes=10)
@@ -159,7 +174,7 @@ def train_lstm():
     """
 
     # Dla LSTM nie skalujemy danych, zostają 28x28
-    train_loader, val_loader = load_mnist_data(resize_to_96=False)
+    train_loader, val_loader = load_mnist_data(resize_to_96=False, add_noise=True, noise_std=0.4)
 
     model = LSTMClassifier()
 
@@ -183,7 +198,7 @@ def train_lstm():
     trainer.fit(model, train_loader, val_loader)
 
     model.evaluate_accuracy(val_loader)
-    model.visualize_results(val_loader, save_path="lstm_conf_matrix.png")
+    model.visualize_results(val_loader, save_path="lstm_conf_matrix_2.png")
 
 
 def plot_training_curves(log_dir):
@@ -233,29 +248,33 @@ if __name__ == "__main__":
     # Analiza danych (np. liczność klas, rozkład)
     #analyze_data(train_data, test_data)
 
+    #version_0 -> wykresy bez white noise = 0.3
+    #version_1 -> wykresy z white noise = 0.3 dla obu datasets
+
     # Trening CNN - 28x28 pixeli
     #train_cnn()
-    #plot_training_curves("logs/cnn/version_0/metrics.csv")
+    #plot_training_curves("logs/cnn/version_1/metrics.csv")
 
     #Hyperparameter tuning dla CNN
     #Sa tu eksparymenty dla różnej liczby filtor z różnym dropoutem i z mniejszymi batch_size oraz epokami.
     #run_all_experiments()
+
     # Test z różną liczbą filtrów
-    #plot_training_curves("logs/cnn_small/version_0/metrics.csv")
-    #plot_training_curves("logs/cnn_medium/version_0/metrics.csv")
-    #plot_training_curves("logs/cnn_large/version_0/metrics.csv")
+    #plot_training_curves("logs/cnn_small/version_1/metrics.csv")
+    #plot_training_curves("logs/cnn_medium/version_1/metrics.csv")
+    #plot_training_curves("logs/cnn_large/version_1/metrics.csv")
 
     # Test z różną liczbą epok
-    #plot_training_curves("logs/cnn_epochs_5/version_0/metrics.csv")
-    #plot_training_curves("logs/cnn_epochs_15/version_0/metrics.csv")
+    #plot_training_curves("logs/cnn_epochs_5/version_1/metrics.csv")
+    #plot_training_curves("logs/cnn_epochs_15/version_1/metrics.csv")
 
     # Test z mniejszym batch_size i większym dropoutem
     #plot_training_curves("logs/cnn_small_batch_dropout/version_0/metrics.csv")
 
     # Trening ResNet50 - 96x96 pixeli
-    #train_resnet50()
+    train_resnet50()
     #plot_training_curves("logs/resnet50/version_0/metrics.csv")
 
     # Trening LSTM - 28 kroków po 28 pixeli (linia po linii)
-    train_lstm()
-    plot_training_curves("logs/lstm/version_0/metrics.csv")
+    #train_lstm()
+    #plot_training_curves("logs/lstm/version_1/metrics.csv")

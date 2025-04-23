@@ -8,7 +8,7 @@ from pytorch_lightning.loggers import CSVLogger
 def run_experiment(name, filters, epochs, batch_size=64, dropout=0.5):
     print(f"\n>>> Running experiment: {name}")
 
-    train_loader, val_loader = load_mnist_data(resize_to_96=False)
+    train_loader, val_loader = load_mnist_data(resize_to_96=False, add_noise=True, noise_std=0.3)
 
     model = CNNModel(filters=filters, dropout=dropout)
 
@@ -31,7 +31,7 @@ def run_experiment(name, filters, epochs, batch_size=64, dropout=0.5):
 
     trainer.fit(model, train_loader, val_loader)
     model.evaluate_accuracy(val_loader)
-    model.visualize_results(val_loader, save_path=f"{name}_conf_matrix.png")
+    model.visualize_results(val_loader, save_path=f"{name}_conf_matrix_WhiteNoise_0.3.png")
 
 
 def run_all_experiments():
